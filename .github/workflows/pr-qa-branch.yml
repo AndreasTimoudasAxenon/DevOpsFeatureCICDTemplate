@@ -48,16 +48,35 @@ jobs:
               shell: bash
               run: |
                   echo ${{ secrets.SFDX_QA_URL}} > ./SFDX_QA_URL.txt
+
+            - name: 'Get Name of Branch That trigger PR'
+              shell: bash
+              run: |
+                  echo "SOURCE=${{github.head_ref}}" >> $GITHUB_ENV 
+
+            - name: 'Get feature branch first commit ref'
+              run: | 
+                  echo "FROM_POINT"=$(git merge-base origin/qa origin/${{ env.SOURCE }}) >> $GITHUB_ENV
+
+            # We use SFDX Git Delta to create a directory with only the metadata that has changed.
+            # this allows us to deploy only those changes, as opposed to deploying the entire branch. 
+            # This helps reducing deployment times
             - name: 'Create delta packages for new, modified or deleted metadata'
               run: | 
                   mkdir changed-sources
-                  sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output changed-sources/ --generate-delta --source force-app/
+                  sfdx sgd:source:delta --to "HEAD" --from ${{ env.FROM_POINT }} --output changed-sources/ --generate-delta --source force-app/ 
+
+            - name: Show content of changed-sources
+              shell: bash
+              run: |
+                  ls -LR changed-sources/
+
             #Authenticate to org
             - name: 'Authenticate to QA Org'
               run: sfdx auth:sfdxurl:store -f ./SFDX_QA_URL.txt -s -a qa
 
             - name: 'Deploy the entire branch to QA org'
-              run: sfdx force:source:deploy -x changed-sources/package/package.xml --checkonly --testlevel RunLocalTests --json
+              run: sfdx force:source:deploy -x changed-sources/package/package.xml --testlevel RunLocalTests --json
 
             - name: 'Deploy destructive changes (if any) to Production org'
               run: sfdx force:mdapi:deploy -d "changed-sources/destructiveChanges" --checkonly --ignorewarnings 

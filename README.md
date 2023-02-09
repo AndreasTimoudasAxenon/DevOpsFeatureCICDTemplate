@@ -11,23 +11,34 @@ The URL has format `"force://<clientId>:<clientSecret>:<refreshToken>@<instanceU
 
 If QA is not needed than the QA related jobs can be disabled. Either way the jobs will not be triggered since the
 qa branch will not exist.
-## WorkFlows
+# Expected WorkFlow
 
-### pr-dev-branch.yml
+## Source of truth
 
-A workflow that runs when a pull request is opened against the `dev` branch.
-Triggers is a pull request is `opened`, `synchronized` or `edited`. This means that if the workflow
-fails because of wrong test specified in the pull request template or because code doesn't pass the test
-all new commits to the feature-branch will get synchronized to the pull request and the workflow will re-run.
+The `development`  branch is expected to be the source of truth. Each new feature should branch out from the `development` branch.
 
-### push-develop-branch.yml
+## New Feature
 
-A workflow that runs when a pull request is approved and pushed to `dev` branch.
+In the starting of a new feature a branch should be created from the `development` branch.
+The development of the feature is then done in a local enviorment, where unittests are also performed. 
 
-When a pull request is approved a "change set" is created under the hood, `sfdx sgd:source:delta --to "HEAD" --from "BRANCHING POINT COMMIT SHA"`. This means that the change set contains everything from the recent commit to the previous commit on the branch.
+Once the feature is developed and ready for for User Acceptance Tests (UAT), a pull request is first opened against the `developement` branch. This performs regression testing and if the tests pass it merges the feature into the `development` branch and opens a pull request against the UAT branch where the user can test before deployment to production.
 
-This change set is later on deployed to the sandbox stored as `SFDX_DEV_URL` in a secret. The deployment is done in
-below fashion:
-`sfdx force:source:deploy -p "changed-sources/force-app" --testlevel RunLocalTests --json`
-meaning all test on that enviroment is run and a log is returned when finished. 
-This job is assumed to never fail.
+If the user is satisfied with the testing the pull request can be closed and merged into the UAT
+branch. This triggers a downward merge of the UAT branch to the `development` branch. Once this downward merge is performed each developer working on a feature is responsible to rebase their feature branch from the development branch.
+
+# Github Actions
+
+1. Validate PR on dev
+ + On: `Pull Request`
+ + Types: `opened`, `synchronize`, `edited`
+ + branch: `dev`
+ + checked source: `force-app/**`
+
+2. Deploy dev branch to dev org, open UAT PR
+ + On: `push`
+ + branch: `dev`
+ + checked paths: `force-app/**`
+ + method: `sfdx-git-delta`
+
+3. 

@@ -52,4 +52,12 @@ jobs:
 
             - name: 'Deploy destructive changes (if any) to development org'
               run: sfdx force:mdapi:deploy -d "changed-sources/destructiveChanges" --checkonly --ignorewarnings 
-
+            
+            #Checkout dev branch
+            - uses: actions/checkout@v3
+                with:
+                ref: dev
+            
+            #Rebase dev branch from UAT branch
+            - name: 'Rebase dev branch'
+              run: git pull origin dev --rebase
