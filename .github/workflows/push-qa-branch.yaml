@@ -56,7 +56,7 @@ jobs:
             #Checkout dev branch
             - uses: actions/checkout@v3
                 with:
-                ref: dev
+                  ref: dev
             
             #Rebase dev branch from UAT branch
             - name: 'Rebase dev branch'
