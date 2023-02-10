@@ -104,6 +104,7 @@ jobs:
             - name: Open Pull Request to UAT branch
               uses: peter-evans/create-pull-request@v4
               with:
+                token: ${{ steps.generate-token.outputs.token }}
                 commit-message: Feature - Ready for UAT
                 title: ${{ env.SOURCE }} - Ready for UAT
                 body: Apex::[all]::Apex
