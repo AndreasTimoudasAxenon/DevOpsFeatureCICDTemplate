@@ -15,6 +15,12 @@ jobs:
         runs-on: ubuntu-latest
         if: ${{ github.actor != 'dependabot[bot]' }}
         steps:
+            # Checkout the source code
+            - name: 'Checkout source code'
+              uses: actions/checkout@v2
+              with:
+                fetch-depth: 0
+                
             # Get the feature branch name that triggered the push
             - name: 'Get Name of Branch That trigger push'
               shell: bash
@@ -36,11 +42,7 @@ jobs:
                   echo y | sfdx plugins:install sfdx-git-delta
                   sfdx plugins 
 
-            # Checkout the source code
-            - name: 'Checkout source code'
-              uses: actions/checkout@v2
-              with:
-                fetch-depth: 0
+
             
             # Read pr body
             - name: 'Read PR Body'
