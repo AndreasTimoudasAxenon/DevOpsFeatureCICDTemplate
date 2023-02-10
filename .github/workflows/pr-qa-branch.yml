@@ -22,7 +22,6 @@ on:
 jobs:
     validate-deployment-on-qa-org:
         runs-on: ubuntu-latest
-        if: ${{ github.actor != 'dependabot[bot]' }}
         steps:
             # Install Salesforce CLI
             - name: 'Install Salesforce CLI'
