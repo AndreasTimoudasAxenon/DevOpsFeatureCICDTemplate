@@ -11,7 +11,7 @@ on:
       # The branches filter allows to specify that this workflow should only
       # run if the branch name is "dev". This way we prevent this workflow
       # from running when PRs are opened on other branches
-      branches: [ qa ]
+      branches: [ feature/release/** ]
       # We only care about changes to the force-app directory, which is the
       # root directory of the sfdx project. This prevents the job from running
       # when changing non-salesforce files (like this yml file).
@@ -31,11 +31,13 @@ jobs:
                   tar xJf sfdx-linux-x64.tar.xz -C ~/sfdx --strip-components 1
                   echo "$HOME/sfdx/bin" >> $GITHUB_PATH
                   ~/sfdx/bin/sfdx version
+
             # install SFDX-Git-Delta plugin - https://github.com/scolladon/sfdx-git-delta
             - name: 'Installing sfdx git delta'
               run: | 
                   echo y | sfdx plugins:install sfdx-git-delta
                   sfdx plugins 
+                  
             # Checkout the source code
             - name: 'Checkout source code'
               uses: actions/checkout@v2
@@ -75,7 +77,7 @@ jobs:
               run: sfdx auth:sfdxurl:store -f ./SFDX_QA_URL.txt -s -a qa
 
             - name: 'Deploy the entire branch to QA org'
-              run: sfdx force:source:deploy -x changed-sources/package/package.xml --testlevel RunLocalTests --json
+              run: sfdx force:source:deploy -x changed-sources/package/package.xml--checkonly  --testlevel RunLocalTests --json
 
             - name: 'Deploy destructive changes (if any) to Production org'
               run: sfdx force:mdapi:deploy -d "changed-sources/destructiveChanges" --checkonly --ignorewarnings 

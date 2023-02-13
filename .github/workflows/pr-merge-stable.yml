@@ -4,7 +4,7 @@ name: Deploy dev branch to dev org
 # Definition when the workflow should run
 on:
     push:
-      branches: [ dev ]
+      branches: [ feature/stable/** ]
       paths:
         - 'force-app/**'
             
@@ -84,34 +84,5 @@ jobs:
             - name: 'Deploy destructive changes (if any)'
               run: sfdx force:mdapi:deploy -d "changed-sources/destructiveChanges" --checkonly --ignorewarnings 
 
-            # Clean up directory
-            - name: 'Clean up'
-              run: |
-                  rm -rf changed-sources
-                  rm SFDX_DEV_URL.txt
-                  rm pr_body.txt
-                  rm testsToRun.txt
-
-            # Gen auth token
-            - name: Gen Token Auth 
-              uses: tibdex/github-app-token@v1
-              id: generate-token
-              with:
-                app_id: ${{ secrets.APP_ID }}
-                private_key: ${{ secrets.APP_PRIVATE_KEY }}
-
-            #Open PR to QA
-            - name: Open Pull Request to UAT branch
-              uses: peter-evans/create-pull-request@v4
-              with:
-                token: ${{ steps.generate-token.outputs.token }}
-                commit-message: Feature - Ready for UAT
-                title: ${{ env.SOURCE }} - Ready for UAT
-                body: Apex::[all]::Apex
-                base: qa
-                labels: automated-pr, UAT-Testing
-                branch: ${{ env.SOURCE }}
-                delete-branch: false
-              
 
 
