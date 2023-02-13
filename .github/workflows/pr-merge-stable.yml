@@ -4,7 +4,7 @@ name: Deploy dev branch to dev org
 # Definition when the workflow should run
 on:
     push:
-      branches: [ feature/stable/** ]
+      branches: [ feature/stable/**, bugfix/stable/** ]
       paths:
         - 'force-app/**'
             
