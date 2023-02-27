@@ -35,11 +35,6 @@ jobs:
               with:
                 fetch-depth: 0
 
-            # Store secret for production org
-            - name: 'Populate auth file with SFDX_URL secret of the integration and staging orgs'
-              shell: bash
-              run: |
-                  echo ${{ secrets.SFDX_QA_URL}} > ./SFDX_QA_URL.txt
 
             - name: 'Get Name of Branch That trigger PR'
               shell: bash
@@ -48,7 +43,11 @@ jobs:
 
             - name: 'Get feature branch first commit ref'
               run: | 
-                  echo "FROM_POINT"=$(git merge-base origin/qa origin/${{ env.SOURCE }}) >> $GITHUB_ENV
+                  echo "FROM_POINT"=$(git merge-base github.base_ref origin/${{ env.SOURCE }}) >> $GITHUB_ENV
+
+            - name: 'Get target branch'
+              run: |
+                  echo " "
 
             # We use SFDX Git Delta to create a directory with only the metadata that has changed.
             # this allows us to deploy only those changes, as opposed to deploying the entire branch. 
@@ -62,6 +61,12 @@ jobs:
               shell: bash
               run: |
                   ls -LR changed-sources/
+
+            # Store secret for production org
+            - name: 'Populate auth file with SFDX_URL secret of the integration and staging orgs'
+              shell: bash
+              run: |
+                  echo ${{ secrets.SFDX_QA_URL}} > ./SFDX_QA_URL.txt
 
             #Authenticate to org
             - name: 'Authenticate to QA Org'
