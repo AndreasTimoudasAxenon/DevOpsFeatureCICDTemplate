@@ -43,7 +43,7 @@ jobs:
 
             - name: 'Get feature branch first commit ref'
               run: | 
-                  echo "FROM_POINT"=$(git merge-base github.base_ref origin/${{ env.SOURCE }}) >> $GITHUB_ENV
+                  echo "FROM_POINT"=$(git merge-base origin/${{ github.base_ref }} origin/${{ env.SOURCE }}) >> $GITHUB_ENV
 
             - name: 'Get target branch'
               run: |

@@ -78,7 +78,7 @@ jobs:
 
             - name: 'Get feature branch first commit ref'
               run: | 
-                  echo "FROM_POINT"=$(git merge-base github.base_ref origin/${{ env.SOURCE }}) >> $GITHUB_ENV
+                  echo "FROM_POINT"=$(git merge-base origin/${{ github.base_ref }} origin/${{ env.SOURCE }}) >> $GITHUB_ENV
 
             # We use SFDX Git Delta to create a directory with only the metadata that has changed.
             # this allows us to deploy only those changes, as opposed to deploying the entire branch. 
