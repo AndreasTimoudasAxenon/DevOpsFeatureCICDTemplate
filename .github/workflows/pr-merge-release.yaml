@@ -3,7 +3,9 @@ name: Deploy QA branch to QA org
 
 # Definition when the workflow should run
 on:
-    push:
+    pull_request:
+      types:
+        - closed
       branches: [ feature/release/**, bugfix/release/** ]
       paths:
         - 'force-app/**'
@@ -12,6 +14,7 @@ on:
 # Jobs to be executed
 jobs:
     validate-deployment-on-qa-org:
+        if: github.event.pull_request.merged == true
         runs-on: ubuntu-latest
         steps:
             # Install Salesforce CLI

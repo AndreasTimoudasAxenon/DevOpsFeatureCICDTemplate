@@ -17,10 +17,6 @@ jobs:
     create-and-test-change-set:
         runs-on: ubuntu-latest
         steps:
-            - uses: trstringer/manual-approval@v1
-              with:
-                secret: ${{ github.TOKEN }}
-                approvers: AndreasTimoudasAxenon
             #Install Salesforce CLI
             - name: 'Install SFDX'
               run: |
@@ -36,7 +32,7 @@ jobs:
                 fetch-depth: 0
             
             - name: 'Populate auth file with SFDX_URL secret of Development org'
-              if: ${{ env.BRANCH_NAME == 'dev' }}
+              if: ${{ env.BRANCH_NAME == 'bugfix/stable/Optimize_PTBatches' }}
               shell: bash
               run: |
                   echo ${{ secrets.SFDX_DEV_URL }} > ./SFDX_AUTH_URL.txt
@@ -58,4 +54,4 @@ jobs:
               run: sfdx auth:sfdxurl:store -f ./SFDX_AUTH_URL.txt -s -a deployOrg
             - name: 'Check-only deploy delta changes - run all specific tests'
               run: |
-                  run: sfdx force:source:deploy -p force-app/ --testlevel RunLocalTests --json
+                  sfdx force:source:deploy -p force-app/ --testlevel RunLocalTests --json

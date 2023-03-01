@@ -1,32 +1,22 @@
 # Unique name for this workflow
-name: Deploy dev branch to dev org
+name: Deploy QA branch to QA org
 
 # Definition when the workflow should run
 on:
-    push:
-      branches: [ feature/stable/**, bugfix/stable/** ]
+    pull_request:
+      types:
+        - closed
+      branches: [ feature/release/**, bugfix/release/** ]
       paths:
         - 'force-app/**'
             
 
 # Jobs to be executed
 jobs:
-    deploy-branch-to-dev-org:
+    validate-deployment-on-qa-org:
+        if: github.event.pull_request.merged == true
         runs-on: ubuntu-latest
-        if: ${{ github.actor != 'dependabot[bot]' }}
         steps:
-            # Checkout the source code
-            - name: 'Checkout source code'
-              uses: actions/checkout@v2
-              with:
-                fetch-depth: 0
-                
-            # Get the feature branch name that triggered the push
-            # - name: 'Get Name of Branch That trigger push'
-            #   shell: bash
-            #   run: |
-            #       echo "SOURCE=$(git log --merges origin/dev --oneline --grep='^Merge' -1 | sed -n -e 's/[^\/]*//p' | cut -c 2-)" >> $GITHUB_ENV
-
             # Install Salesforce CLI
             - name: 'Install Salesforce CLI'
               run: |
@@ -41,19 +31,13 @@ jobs:
               run: | 
                   echo y | sfdx plugins:install sfdx-git-delta
                   sfdx plugins 
+                  
+            # Checkout the source code
+            - name: 'Checkout source code'
+              uses: actions/checkout@v2
+              with:
+                fetch-depth: 0
 
-            
-            # Read pr body
-            - name: 'Read PR Body'
-              env:
-
-                PR_BODY: ${{github.event.pull_request.body}}
-
-              run: |
-                  echo $PR_BODY > ./pr_body.txt
-                  node ./parsePR.js              
-                  TESTS=$(cat testsToRun.txt)       
-                  echo "APEX_TESTS=$TESTS" >> $GITHUB_ENV
 
             - name: 'Get Name of Branch That trigger PR'
               shell: bash
@@ -64,7 +48,10 @@ jobs:
               run: | 
                   echo "FROM_POINT"=$(git merge-base origin/${{ github.base_ref }} origin/${{ env.SOURCE }}) >> $GITHUB_ENV
 
-            
+            - name: 'Get target branch'
+              run: |
+                  echo " "
+
             # We use SFDX Git Delta to create a directory with only the metadata that has changed.
             # this allows us to deploy only those changes, as opposed to deploying the entire branch. 
             # This helps reducing deployment times
@@ -78,28 +65,18 @@ jobs:
               run: |
                   ls -LR changed-sources/
 
-            # Store secret for both otgs
-            - name: 'Populate auth file with SFDX_URL secret of the dev and qa orgs'
+            # Store secret for production org
+            - name: 'Populate auth file with SFDX_URL secret of the integration and staging orgs'
               shell: bash
               run: |
                   echo ${{ secrets.SFDX_DEV_URL}} > ./SFDX_DEV_URL.txt
-                  
-            # Authenticate to org
-            - name: 'Authenticate to Dev Org'
-              run: sfdx auth:sfdxurl:store -f ./SFDX_DEV_URL.txt -s -a development
 
-            - name: 'Check-only deploy delta changes - run specified tests'
-              if: ${{ env.APEX_TESTS != 'all' }}
-              run: |
-                  echo ${{env.APEX_TESTS}}
-                  sfdx force:source:deploy -x "changed-sources/package/package.xml" --testlevel RunSpecifiedTests --runtests ${{env.APEX_TESTS}} --json
-            # If the env variable equals all, we run all tests
-            - name: 'Check-only deploy delta changes - run all tests'
-              if: ${{ env.APEX_TESTS == 'all' }}
-              run: |
-                  sfdx force:source:deploy -x "changed-sources/package/package.xml" --testlevel RunLocalTests  --json
-            - name: 'Deploy destructive changes (if any)'
+            #Authenticate to org
+            - name: 'Authenticate to QA Org'
+              run: sfdx auth:sfdxurl:store -f ./SFDX_DEV_URL.txt -s -a qa
+
+            - name: 'Deploy the entire branch to QA org'
+              run: sfdx force:source:deploy -x changed-sources/package/package.xml --testlevel RunLocalTests --json
+
+            - name: 'Deploy destructive changes (if any) to Production org'
               run: sfdx force:mdapi:deploy -d "changed-sources/destructiveChanges" --checkonly --ignorewarnings 
-
-
-
