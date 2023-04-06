@@ -6,14 +6,14 @@ on:
     pull_request:
       types:
         - closed
-      branches: [ feature/release/**, bugfix/release/** ]
+      branches: [ feature/stable/**, bugfix/stable/** ]
       paths:
         - 'force-app/**'
             
 
 # Jobs to be executed
 jobs:
-    validate-deployment-on-qa-org:
+    deployment-on-qa-org:
         if: github.event.pull_request.merged == true
         runs-on: ubuntu-latest
         steps:
